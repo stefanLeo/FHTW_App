@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello">Hello World, LV_PlanActivity!</string>
+    <string name="app_name">LV-Plan FHTW</string>
+    <string name="Load">Load iCal</string>
+    <string name="SaveButton">Save</string>
+    <string name="CloseButton">Close</string>
+    <string name="PwLabel">PW:  </string>
+    <string name="UidLabel">UID: </string>
+    <string name="RefreshLabel">Refresh</string>
+    <string name="PropertiesLabel">Properties</string>
+    <string name="GoogleCalLabel">Export to Google Calendar</string>
+    <string name="updateInterval">Update Interval:</string>
+    <string-array name="UpdateIntervals">
+        <item>Startup</item>
+        <item>Daily</item>
+        <item>Weekly</item>
+        <item>Monthly</item>
+        <item>Manual</item>
+    </string-array>
+    <string name="DeleteGoogleCal">Delete FHTW Calendar Entries</string>
+</resources>

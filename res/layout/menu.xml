@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+	<group
+		android:menuCategory="container">
+	    <item
+	        android:id="@+id/refresh"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:icon="@drawable/ic_menu_refresh"
+	        android:title="@string/RefreshLabel"/>
+	
+	    <item
+	        android:id="@+id/properties"
+	        android:icon="@drawable/ic_menu_manage"
+	        android:title="@string/PropertiesLabel"
+	        android:layout_width="wrap_content"
+	    	android:layout_height="wrap_content"/>
+    </group>
+
+	<item
+        android:id="@+id/googlecal"
+        android:icon="@drawable/ic_menu_my_calendar"
+        android:title="@string/GoogleCalLabel"
+        android:layout_width="wrap_content"
+    	android:layout_height="wrap_content"/>
+	
+	<item
+        android:id="@+id/delgooglecal"
+        android:icon="@drawable/ic_menu_delete"
+        android:title="@string/DeleteGoogleCal"
+        android:layout_width="wrap_content"
+    	android:layout_height="wrap_content"/>
+	
+</menu>
