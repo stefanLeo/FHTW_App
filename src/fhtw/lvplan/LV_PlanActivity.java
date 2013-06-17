@@ -19,12 +19,14 @@
 package fhtw.lvplan;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
@@ -161,6 +163,10 @@ public class LV_PlanActivity extends FragmentActivity {
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
+    	/*View title = getWindow().findViewById(android.R.id.title);
+    	View titleBar = (View) title.getParent();
+    	titleBar.setBackgroundColor(Color.parseColor("#0087c7"));*/
+    	
     	try{
 	        super.onCreate(savedInstanceState);
 	        setContentView(R.layout.main);

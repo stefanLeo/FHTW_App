@@ -18,7 +18,9 @@
  */
 package util;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -41,6 +43,7 @@ public class CalendarReader extends Thread {
 		private static final String LOCATION		= "LOCATION";
 		private static final String START			= "DTSTART";
 		private static final String END				= "DTEND";
+		private static final String DESCRIPTION		= "DESCRIPTION";
 		private static final Integer CRLF			= 10;
 		private static final Integer FILE_END		= -1;
 		private static final Integer LOAD_WEEKS		= 3;
@@ -103,14 +106,19 @@ public class CalendarReader extends Thread {
     	} else {
     		readCalEntries = new ArrayList<LvPlanEntries>();
     	}
+    	
+    	InputStreamReader in 	= null;
+    	BufferedReader br 	 	= null;
+    	FileInputStream fstream = null;
+    	
     	//READ FILE AND PARSE
     	try { 
 				GregorianCalendar now = new GregorianCalendar(Locale.GERMANY);
 				GregorianCalendar last = new GregorianCalendar(Locale.GERMANY);
 				last.add(Calendar.WEEK_OF_YEAR, Parameter.LOAD_WEEKS);
 				
-				FileInputStream fstream = ctx.openFileInput(DownloadManager.CAL_FILENAME); 
-				byte[] buffer = new byte[1];
+				fstream = ctx.openFileInput(DownloadManager.CAL_FILENAME);
+				byte[] buffer = new byte[1024];
 				byte[] jumpbuffer = new byte[21*16];
 
 				fstream.read(jumpbuffer);
@@ -119,78 +127,81 @@ public class CalendarReader extends Thread {
 				LvPlanEntries entry = new LvPlanEntries();
 			    int readEntriesCount = 0;
 
-				while(fstream.read(buffer) != Parameter.FILE_END) {
-					String str = "";
-					while(buffer[0] != Parameter.CRLF) {
-						str += new String(buffer); //READ UNTIL CLFR
-						if(fstream.read(buffer) == Parameter.FILE_END) {
-							break;
-						}
+			    in = new InputStreamReader(fstream, "utf8");
+			    br = new BufferedReader(in, buffer.length);
+			    
+			    String str;
+			    while((str = br.readLine()) != null ){
+					if(str.contains(Parameter.SUMMARY)) {
+						entry.setSummary( str.substring(str.indexOf(":")+1, str.indexOf(" ")) );
+						continue;
 					}
-
-
-						//Jump a few bytes, when date in the past
-						if(str.contains(Parameter.JUMP_MARKER)) {
-							String tmpstr = str.substring(str.length()-15, str.length());
-							//Tmpdate hier ist die Anfangszeit!! --> d.h nicht jumpen wenn innerhalb von 4H (kleinste einheit im ical File)
-							GregorianCalendar tmpdate = getCalenderFromString(tmpstr);
-    						tmpdate.add(Calendar.HOUR_OF_DAY, 4);
-    						if(tmpdate.getTimeInMillis() < now.getTimeInMillis()) {
-    							fstream.read(jumpbuffer);
-    							entry = new LvPlanEntries();
-    							continue;
-    						}
-						}
-    					
-    					if(str.contains(Parameter.SUMMARY)) {
-    						entry.setSummary( str.substring(str.indexOf(":")+1, str.indexOf(" ")) );
-    						continue;
-    					}
-    					
-    					if(str.contains(Parameter.LOCATION)) {
-    						entry.setLocation( str.substring(str.indexOf(":")+1, str.length()) );
-    						continue;
-    					}
-    					
-    					if(str.contains(Parameter.START)) {
-    						String fromRead = str.substring(str.indexOf(":")+1, str.length());
-    						entry.setFromDate( getCalenderFromString(fromRead) );
-    						continue;
-    					}
-    					
-    					if(str.contains(Parameter.END)) {    						
-    						String toRead = str.substring(str.indexOf(":")+1, str.length());	
-    						//Datumspruefung > Heute
-    						entry.setToDate( getCalenderFromString(toRead) );
-    						
-    						//Nur 3 Wochen nach vorne laden!! 
-    						if(timeBoxed && entry.getToDate().getTimeInMillis() > last.getTimeInMillis()) {
-    							if(readEntriesCount < 15) {
-                                    readEntries.add(entry);
-                                    readEntriesCount++;
-                                    entry = new LvPlanEntries();
-                                    continue;
-                                } else {
-                                	break;
-                                }
-    						}
+					
+					if(str.contains(Parameter.DESCRIPTION)){
+						String prof = str.substring(str.indexOf("\\n")+2);
+						prof = prof.substring(0, prof.indexOf("\\n"));
+						Log.d("PROF", prof);
+						entry.setProfessor(prof);
+						continue;
+					}
+					
+					if(str.contains(Parameter.LOCATION)) {
+						entry.setLocation( str.substring(str.indexOf(":")+1, str.length()) );
+						continue;
+					}
+					
+					if(str.contains(Parameter.START)) {
+						String fromRead = str.substring(str.indexOf(":")+1, str.length());
+						entry.setFromDate( getCalenderFromString(fromRead) );
+						continue;
+					}
+					
+					if(str.contains(Parameter.END)) {    						
+						String toRead = str.substring(str.indexOf(":")+1, str.length());	
+						//Datumspruefung > Heute
+						entry.setToDate( getCalenderFromString(toRead) );
 						
-    						if(entry.getToDate().getTimeInMillis() > now.getTimeInMillis()) {
-    							if(timeBoxed){           //Timeboxed == Read for InMap Usage
-    								readEntries.add(entry);
-    								readEntriesCount++;
-    					    	} else {                     //Read 4 Calendar
-    					    		readCalEntries.add(entry);
-    					    	}
-    						}
-    						entry = new LvPlanEntries();
-    					}
+						//Nur 3 Wochen nach vorne laden!! 
+						if(timeBoxed && entry.getToDate().getTimeInMillis() > last.getTimeInMillis()) {
+							if(readEntriesCount < 15) {
+                                readEntries.add(entry);
+                                readEntriesCount++;
+                                entry = new LvPlanEntries();
+                                continue;
+                            } else {
+                            	break;
+                            }
+						}
+					
+						if(entry.getToDate().getTimeInMillis() > now.getTimeInMillis()) {
+							if(timeBoxed){           //Timeboxed == Read for InMap Usage
+								readEntries.add(entry);
+								readEntriesCount++;
+					    	} else {                     //Read 4 Calendar
+					    		readCalEntries.add(entry);
+					    	}
+						}
+						entry = new LvPlanEntries();
+					}
 				}
-
-    			fstream.close();
-
 			} catch(Exception ex) {
 				Log.d("ERROR READ", "Calendar Reader", ex);
+			} finally {
+				if(br != null){
+					try{
+						br.close();
+					} catch(Exception ignore){}
+				}
+				if(in != null){
+					try{
+						in.close();
+					} catch(Exception ignore){}
+				}
+				if(fstream != null){
+					try{
+						fstream.close();
+					}catch(Exception ignore){}
+				}
 			}
 	}
     

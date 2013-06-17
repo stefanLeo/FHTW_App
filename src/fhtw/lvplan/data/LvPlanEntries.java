@@ -31,6 +31,8 @@ public class LvPlanEntries {
 
 	private String summary;
 	
+	private String professor;
+	
 	private String location;
 	
 	private GregorianCalendar fromTime;
@@ -41,12 +43,13 @@ public class LvPlanEntries {
 	
 	private String[] weekdays = new DateFormatSymbols().getWeekdays(); 
 	
-	public LvPlanEntries(String date, String summary, String location, GregorianCalendar fromDate, GregorianCalendar toDate) {
-		this.date = date;
-		this.summary = summary;
-		this.location = location;
-		this.fromTime = fromDate;
-		this.toTime = toDate;		
+	public LvPlanEntries(String date, String summary, String location, GregorianCalendar fromDate, GregorianCalendar toDate, String prof) {
+		this.date 		= date;
+		this.summary 	= summary;
+		this.location 	= location;
+		this.fromTime 	= fromDate;
+		this.toTime 	= toDate;		
+		this.professor 	= prof;
 	}
 	
 	
@@ -110,8 +113,16 @@ public class LvPlanEntries {
 		}
 	}
 	
+	public void setProfessor(String prof){
+		this.professor = prof;
+	}
+	
+	public String getProfessor(){
+		return professor;
+	}
+	
 	@Override
 	public String toString() {
-		return this.getSummary() +" - " + this.getLocation() + "\nFrom: " + this.getFormattedFromDate() + "  To: " + this.getFormattedToDate();
+		return this.getSummary() +" at " + this.getLocation() + " by " + this.getProfessor() + "\nFrom: " + this.getFormattedFromDate() + "  To: " + this.getFormattedToDate();
 	}
 }
