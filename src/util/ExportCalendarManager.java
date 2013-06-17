@@ -23,6 +23,7 @@ import java.util.List;
 import fhtw.lvplan.data.LvPlanEntries;
 import android.content.Context;
 import android.os.Handler;
+import android.support.v4.app.FragmentManager;
 import android.util.Log;
 
 public class ExportCalendarManager extends ManagerThread {
@@ -32,9 +33,9 @@ public class ExportCalendarManager extends ManagerThread {
 	
 	private CalendarExporter exporter;
 	
-	public ExportCalendarManager(final Context curContext, final  Handler handler){
+	public ExportCalendarManager(final Context curContext, final  Handler handler, final FragmentManager fragmentManager){
 		super(handler);
-		exporter = new CalendarExporter(curContext, handler);
+		exporter = new CalendarExporter(curContext, handler, fragmentManager);
 		this.setDaemon(true);
 	}
 	
@@ -42,7 +43,6 @@ public class ExportCalendarManager extends ManagerThread {
 		try{
 			exporter.start();
 			exporter.join(TIMEOUT_GOOGLE_CAL);
-			sendMessage(CAL_OK);
 		} catch(Exception ex) {
 			Log.d("Error while syncing Google Calendar", "", ex);
 			sendMessage(CAL_ERROR);

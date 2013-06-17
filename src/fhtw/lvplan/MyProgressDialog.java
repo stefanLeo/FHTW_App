@@ -27,6 +27,7 @@ import android.support.v4.app.DialogFragment;
 
 public class MyProgressDialog extends DialogFragment {
 	private int id = 0;
+	private ProgressDialog progressDialog;
 	
 	public static MyProgressDialog newInstance(final int id){
 		MyProgressDialog myPD = new MyProgressDialog();
@@ -36,21 +37,16 @@ public class MyProgressDialog extends DialogFragment {
 	
 	@Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-		ProgressDialog progressDialog;
+		progressDialog = new ProgressDialog(getActivity());
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 		switch(id) {
 	        case LV_PlanActivity.PROGRESS_LOAD_DIALOG:
-	            progressDialog = new ProgressDialog(getActivity());
-	            progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 	            progressDialog.setMessage("Loading...");
 	            return progressDialog;
 	        case LV_PlanActivity.PROGRESS_CAL_DIALOG:
-	        	progressDialog = new ProgressDialog(getActivity());
-	            progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 	            progressDialog.setMessage("Writing entries to Calendar: 0 / " + LV_PlanActivity.getReadLvPlanEntries());
 	            return progressDialog;
 	        case LV_PlanActivity.PROGRESS_READ_DIALOG:
-	        	progressDialog = new ProgressDialog(getActivity());
-	            progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 	            progressDialog.setMessage("Reading Calendar-File...");
 	            return progressDialog;    
 	        default:
@@ -65,4 +61,11 @@ public class MyProgressDialog extends DialogFragment {
 	public void setId(final int id){
 		this.id = id;
 	}
+	
+	/**
+     * Updates progress of google sync
+     */
+    public void updateProgress(final int current, final int total){
+    	progressDialog.setMessage("Writing entries to Calendar: " + current +" / " + total);
+    }
 }

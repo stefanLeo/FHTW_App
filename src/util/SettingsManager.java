@@ -18,6 +18,7 @@
  */
 package util;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -65,30 +66,44 @@ public class SettingsManager {
      */
     private boolean readSettings()
     {
+    	FileInputStream fstream = null;
     	try{
-    		FileInputStream fstream = ctx.openFileInput(SETTINGS_FILE);
-    		StringEncrypter cipher = new StringEncrypter(SETTINGS_KEY);
-    		byte[] buffer = new byte[200];
-    		byte[] totalBuffer = null;
-    		int count = 0;
+    		File settingsFile = new File(SETTINGS_FILE);
     		
-    		while((count = fstream.read(buffer)) != -1) {
-    			if(totalBuffer != null){
-    				byte[] tmpArray = new byte[totalBuffer.length + count];
-    				System.arraycopy(totalBuffer, 	0, tmpArray, 0, 					totalBuffer.length);
-    				System.arraycopy(buffer, 		0, tmpArray, totalBuffer.length, 	count);
-    				totalBuffer = null;
-    				totalBuffer = tmpArray.clone();
-    				tmpArray 	= null;
-    			} else {
-    				totalBuffer = buffer.clone();
-    			}			
-    		}  
-    		String read = cipher.decrypt(totalBuffer);
-			settings = Settings.fromString(read);
+    		if(!settingsFile.exists()){
+	    		fstream = ctx.openFileInput(SETTINGS_FILE);
+	    		StringEncrypter cipher = new StringEncrypter(SETTINGS_KEY);
+	    		byte[] buffer = new byte[200];
+	    		byte[] totalBuffer = null;
+	    		int count = 0;
+	    		
+	    		while((count = fstream.read(buffer)) != -1) {
+	    			if(totalBuffer != null){
+	    				byte[] tmpArray = new byte[totalBuffer.length + count];
+	    				System.arraycopy(totalBuffer, 	0, tmpArray, 0, 					totalBuffer.length);
+	    				System.arraycopy(buffer, 		0, tmpArray, totalBuffer.length, 	count);
+	    				totalBuffer = null;
+	    				totalBuffer = tmpArray.clone();
+	    				tmpArray 	= null;
+	    			} else {
+	    				totalBuffer = buffer.clone();
+	    			}			
+	    		}  
+	    		String read = cipher.decrypt(totalBuffer);
+				settings = Settings.fromString(read);
+    		} else {
+    			Log.d("Verify Settings file exists", "Not existing");
+    			return false;
+    		}
     	} catch(Exception ex){
     		Log.d("Error", "Read Settings", ex);
     		return false;
+    	} finally{
+    		if(fstream != null){
+    			try{
+    				fstream.close();
+    			} catch(Exception ignore){}
+    		}
     	}
     	
     	return true;

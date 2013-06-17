@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:orientation="vertical"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent">
+    <ScrollView android:id="@+id/aboutscrollview" 
+            android:orientation="vertical"
+            android:layout_width="fill_parent" 
+            android:layout_height="fill_parent">    
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content">
+                    <TextView android:text="@string/ChangeHeader"
+                            android:layout_width="fill_parent" 
+                            android:layout_height="wrap_content"
+                            android:paddingLeft="15dp"              
+                            android:layout_gravity="center_vertical"
+                            android:textColor="#ffffff" />  
+                    <TextView android:text="@string/Changes"
+                            android:layout_width="fill_parent" 
+                            android:layout_height="wrap_content"            
+                            android:paddingTop="15dp"
+                            android:paddingLeft="15dp"
+                            android:textStyle="bold"
+                            android:textColor="#ffffff" />
+                    <TextView android:text="@string/ChangelogLink"
+                            android:layout_width="fill_parent" 
+                            android:layout_height="wrap_content"
+                            android:paddingLeft="15dp"      
+                            android:paddingBottom="10dp"            
+                            android:textColor="#ffffff" />
+                    <TextView android:text="@string/WebSites"
+                            android:layout_width="fill_parent" 
+                            android:layout_height="wrap_content"            
+                            android:paddingTop="15dp"
+                            android:paddingLeft="15dp"
+                            android:textStyle="bold"
+                            android:textColor="#ffffff" />
+                    <TextView android:text="@string/OSHosting"
+                            android:layout_width="fill_parent" 
+                            android:layout_height="wrap_content"
+                            android:paddingLeft="15dp"      
+                            android:paddingBottom="10dp"            
+                            android:textColor="#ffffff" />
+                    <TextView android:text="@string/JiraLink"
+                            android:layout_width="fill_parent" 
+                            android:layout_height="wrap_content"
+                            android:paddingLeft="15dp"      
+                            android:paddingBottom="10dp"            
+                            android:textColor="#ffffff" />
+                    </LinearLayout>
+            </ScrollView>                   
+</LinearLayout>

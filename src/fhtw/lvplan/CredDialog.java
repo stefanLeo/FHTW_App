@@ -18,6 +18,7 @@
  */
 package fhtw.lvplan;
 
+import util.Changelog;
 import util.SettingsManager;
 import fhtw.lvplan.data.Settings;
 import fhtw.lvplan.data.UpdateInterval;
@@ -33,6 +34,8 @@ import android.widget.EditText;
 import android.widget.Spinner;
 
 public class CredDialog extends Activity{	
+	public static Boolean showChangelog = false;
+	
 	@Override
     public void onCreate(Bundle savedInstanceState) {
 	        super.onCreate(savedInstanceState);
@@ -106,8 +109,14 @@ public class CredDialog extends Activity{
 	        		((EditText) findViewById(R.id.txtPW)).setText(settings.getPassword());
 	        		spinner.setSelection(settings.getUpdateInterval().getId());
 	        	}
-	        }catch(Exception e){
+	        } catch(Exception e){
 	        	Log.d("CRED DIALOG", "SETINGS", e);
+	        }
+	        
+	        //Verify if newer version installed
+	        if(showChangelog && Changelog.verifyVersionChanged(this)){
+	        	Changelog.viewChangelog(this);
+	        	showChangelog = false;
 	        }
 	}	
 }

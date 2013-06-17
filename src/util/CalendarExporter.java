@@ -18,8 +18,12 @@
  */
 package util;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.TimeZone;
 
+import android.annotation.TargetApi;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -28,11 +32,14 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.CalendarContract;
+import android.support.v4.app.FragmentManager;
 import android.util.Log;
+import fhtw.lvplan.CalendarPickerDialog;
 import fhtw.lvplan.data.LvPlanEntries;
 
 public class CalendarExporter extends Thread {
 	public static final int CAL_UPDATE		= 12;
+	public static final int CAL_OK 			= 10;
 	private static final String MARKER = "Created by LVPlan FHTW (C)";
 	
 	private String URI_CALENDAR ="content://";
@@ -42,18 +49,19 @@ public class CalendarExporter extends Thread {
 	public static int COUNT = 0;
 	private boolean ics = false;
 	private int calendarID = 0;
+	private ContentResolver contentResolver = null;
+	private FragmentManager fragmentManager = null;
 	
-	
-	public CalendarExporter(final Context curContext, final Handler handler){
+	public CalendarExporter(final Context curContext, final Handler handler, final FragmentManager fragmentManger){
 		COUNT = 0;
 		appContext = curContext;
 		this.handler = handler;
 
-        //TODO: ASK USER TO CHOOSE CALENDAR
-		calendarID = 0;
-
-		if(Build.VERSION.SDK_INT >= 15) {
-			//Android 4
+		calendarID = 1;
+		this.fragmentManager = fragmentManger;
+		this.contentResolver = curContext.getContentResolver();
+		
+		if(Build.VERSION.SDK_INT >= 14) {
 			ics = true;
 		} else if( Build.VERSION.SDK_INT >= 8 ) {
 		    URI_CALENDAR += "com.android.calendar/events";
@@ -67,19 +75,27 @@ public class CalendarExporter extends Thread {
 		COUNT = 0;
 		try {
 			if(lvPlanEntries != null) {
-				//Delete already created Entries:
-				deleteAddedCalEntries();
-				for(LvPlanEntries entry : lvPlanEntries) {
-                    this.pushAppointmentsToCalender(entry);
-        			//Log.d("EventID:"," " + eventId);
-        			COUNT++;
-        			sendMessage(CAL_UPDATE);
-        			//if(COUNT > 5) break;
+				if(ics){
+					this.requireCalendarID();
+				} else {
+					doUpdate();
 				}
 			}
 		} catch(Exception ex) {
 			Log.d("Error while syncing Google Calendar", "", ex);
 		}
+	}
+	
+	private void doUpdate(){
+		//Delete already created Entries:
+		deleteAddedCalEntries();
+		for(LvPlanEntries entry : lvPlanEntries) {
+            this.pushAppointmentsToCalender(entry);
+			//Log.d("EventID:"," " + eventId);
+			COUNT++;
+			sendMessage(CAL_UPDATE);
+		}
+		sendMessage(CAL_OK);
 	}
 	
 	/**
@@ -90,15 +106,36 @@ public class CalendarExporter extends Thread {
 		this.lvPlanEntries = lvPlanEntries;
 	}
 	
+	@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 	private long pushAppointmentsToCalender(final LvPlanEntries entry) {
 		try{
 			if(ics){
-				
-				return 0;
+				ContentValues eventValues = new ContentValues();
+				 //The _ID of the calendar the event belongs to --> Primary == 1
+				 eventValues.put("calendar_id", calendarID); 
+				 eventValues.put(CalendarContract.Events.TITLE, entry.getSummary());
+				 eventValues.put(CalendarContract.Events.DESCRIPTION, MARKER); //used to find again !?!?
+				 eventValues.put(CalendarContract.Events.EVENT_LOCATION, entry.getLocation());
+				 eventValues.put(CalendarContract.Events.DTSTART, entry.getFromDate().getTimeInMillis() ); //The time the event starts in UTC millis since epoch
+				 eventValues.put(CalendarContract.Events.DTEND, entry.getToDate().getTimeInMillis() );
+				 //eventValues.put("eventStatus", status);
+				 //eventValues.put(CalendarContract.Events.VISIBLE, 0); // visibility to default (0),
+				                                        // confidential (1), private
+				                                        // (2), or public (3):
+				 //eventValues.put("transparency", 0); // You can control whether
+				                                        // an event consumes time
+				                                        // opaque (0) or transparent
+				                                        // (1).
+				 eventValues.put(CalendarContract.Events.HAS_ALARM, 0); // 0 for false, 1 for true
+				 TimeZone timeZone = TimeZone.getDefault();
+				 eventValues.put(CalendarContract.Events.EVENT_TIMEZONE, timeZone.getID());
+				 
+				 Uri uri = contentResolver.insert(CalendarContract.Events.CONTENT_URI, eventValues);
+				 return Long.parseLong(uri.getLastPathSegment());
 			} else {
 				 ContentValues eventValues = new ContentValues();
 				 //The _ID of the calendar the event belongs to --> Primary == 1
-				 eventValues.put("calendar_id", 1); 
+				 eventValues.put("calendar_id", calendarID); 
 				 eventValues.put("title", entry.getSummary());
 				 eventValues.put("description", MARKER); //used to find again !?!?
 				 eventValues.put("eventLocation", entry.getLocation());
@@ -127,19 +164,86 @@ public class CalendarExporter extends Thread {
 	/**
 	 * DELETES ALL FHTW RELATED ENTRIES
 	 */
+	@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 	public boolean deleteAddedCalEntries(){
 		try{
+			//It is currently deleting calendar entries in every Calendar
 			if(ics){
-				//TODO: use calendar ID
-				//appContext.getContentResolver().delete(CalendarContract.Events.CONTENT_URI, "calendar_id=? and description=?", new String[]{String.valueOf(1), MARKER});
-			} else {			
-				appContext.getContentResolver().delete(Uri.parse(URI_CALENDAR), "calendar_id=? and description=?", new String[]{String.valueOf(1), MARKER});
+				contentResolver.delete(CalendarContract.Events.CONTENT_URI, "description=?", new String[]{ MARKER});
+			} else {	
+				//contentResolver.delete(Uri.parse(URI_CALENDAR), "calendar_id=? and description=?", new String[]{String.valueOf(1), MARKER});
+				contentResolver.delete(Uri.parse(URI_CALENDAR), "description=?", new String[]{MARKER});
 			}
 		}catch(Exception ex){
 			Log.d("Delete Event", "Error", ex);
 			return false;
 		}
 		return true;
+	}
+	
+	/**
+	 * Asks user for Calendar to be exported to ONLY if there are more than one calendar instances available
+	 * @return
+	 */
+	@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+	private void requireCalendarID(){
+		if(fragmentManager == null){
+			return;
+		}
+		Cursor calendarCursor = null;
+		try{
+			String[] projection = new String[] {
+			       CalendarContract.Calendars._ID,
+			       CalendarContract.Calendars.ACCOUNT_NAME,
+			       CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,
+			       CalendarContract.Calendars.NAME,
+			       CalendarContract.Calendars.CALENDAR_COLOR
+			};
+	
+			calendarCursor = contentResolver.query(CalendarContract.Calendars.CONTENT_URI, projection, null, null, null);
+			calendarCursor.moveToFirst();
+			if(calendarCursor.isFirst() && calendarCursor.isLast()){
+				//Only one calendar available... nothing to be selected...
+				Log.d("CalendarCursor", "ONLY ONE calendar instance available");
+				return;				
+			} else {
+				final List<Integer> ids			= new ArrayList<Integer>();
+				final List<StringBuilder> sb 	= new ArrayList<StringBuilder>();
+				final StringBuilder[] sbArray 	= new StringBuilder [1];
+				
+				while(!calendarCursor.isLast()){
+					//only add calendars with different ids
+					if(!ids.contains(calendarCursor.getInt(0))){
+						sb.add(new StringBuilder(calendarCursor.getString(3)));
+						ids.add(Integer.parseInt(calendarCursor.getString(0)));
+					}
+					calendarCursor.moveToNext();
+				}
+				
+				final CalendarPickerDialog cpd = CalendarPickerDialog.newInstance(sb.toArray(sbArray), new CalendarChosenListener(){
+					public void selected(int id) {
+						calendarID = ids.get(id);
+						Thread t = new Thread(){
+							public void run(){
+								doUpdate();
+							}
+						};
+						t.start();
+					}
+
+					public void canceled() {
+						return; 
+					}
+				});
+				
+				cpd.show(fragmentManager, "chooser");
+			}
+		} catch(Exception ex){
+			Log.d("Require Calendar ID", "Error", ex);
+			if(calendarCursor != null){
+				calendarCursor.close();
+			}
+		}	
 	}
 	
 	/**

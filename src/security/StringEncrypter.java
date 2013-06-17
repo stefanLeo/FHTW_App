@@ -18,10 +18,12 @@
  */
 package security;
 
+import java.security.MessageDigest;
+
 import javax.crypto.Cipher;
 
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 import android.util.Base64;
 import android.util.Log;
@@ -33,14 +35,30 @@ public class StringEncrypter {
 	
 	public StringEncrypter(String password) {
 		try{
-			KeyGenerator kgen = KeyGenerator.getInstance("AES");
-			kgen.init(256);
-			key = kgen.generateKey();
-			cipher= Cipher.getInstance("AES");
+			key = generateKey(password, "AES");
+			cipher= Cipher.getInstance("AES/ECB/PKCS5Padding");
 		} catch(Exception ex) {
 			Log.d("Error", ex.getMessage());
 		}
 	}	
+	
+	/**
+	 * Generates Key with correct length for AES encryption
+	 * @param password
+	 * @param algorithm
+	 * @return
+	 */
+	private SecretKeySpec generateKey(final String password, final String algorithm){
+        try{
+            MessageDigest digester = MessageDigest.getInstance("MD5");
+            digester.update(password.getBytes("UTF-8"));
+            byte[] key = digester.digest();
+            return new SecretKeySpec(key, algorithm);
+        } catch (Exception ex){
+            ex.printStackTrace();
+            return null;
+        }
+    }
 	
 	/**
 	 * Takes a single String as an argument and returns an Encrypted version
@@ -66,8 +84,7 @@ public class StringEncrypter {
 	 * @return <code>String</code> Decrypted version of the provided String
 	 */
 	public String decrypt(byte[] dec) {
-		try
-		{
+		try {
 			//final IvParameterSpec iv = new IvParameterSpec(new byte[8]);
 			cipher.init(Cipher.DECRYPT_MODE, key);
 			return new String(Base64.decode(cipher.doFinal(dec), Base64.DEFAULT));

@@ -38,6 +38,7 @@ import fhtw.lvplan.data.LvPlanEntries;
 import fhtw.lvplan.data.Settings;
 
 import util.CalendarExporter;
+import util.Changelog;
 import util.ExportCalendarManager;
 import util.CalendarReader;
 import util.DownloadManager;
@@ -61,8 +62,8 @@ public class LV_PlanActivity extends FragmentActivity {
 	private List<String[]> children = new ArrayList<String[]>();
 	private ExpandableListView epView;
 	private ExpandableListAdapter mAdapter;
-	//private ProgressDialog progressDialog;
-
+	private DialogFragment newDF = null;
+	
 	private DownloadManager download;
 	private ReadCalendarManager calendarReader;
 	private ExportCalendarManager calendarWriter;
@@ -120,7 +121,7 @@ public class LV_PlanActivity extends FragmentActivity {
 						 SettingsManager.getInstance(null).getSettingsInstance().setLastUpdate(new GregorianCalendar());
 						 SettingsManager.getInstance(null).saveSettings();
 						 break;
-					 case ExportCalendarManager.CAL_OK:										//CAL SYNC SUCCESSFULL
+					 case CalendarExporter.CAL_OK:										//CAL SYNC SUCCESSFULL
 						 main_activity.dismissProgressDialog();
 						 CalendarExporter.COUNT = 0;
 						 //main_activity.updateProgress();
@@ -132,7 +133,7 @@ public class LV_PlanActivity extends FragmentActivity {
 						 //main_activity.updateProgress();
 						 break;
 					 case CalendarExporter.CAL_UPDATE:										//UPDATE PROGRESS DIALOG ENTRIES
-						 //main_activity.updateProgress();
+						 main_activity.updateProgress();
 						 break;
 					 case ReadCalendarManager.READ_OK:											//UPDATE UI WITH CALENDAR
 						 main_activity.dismissProgressDialog();
@@ -165,11 +166,13 @@ public class LV_PlanActivity extends FragmentActivity {
 	        setContentView(R.layout.main);
 	        epView = (ExpandableListView) findViewById(R.id.expandableListView1);
 	        
+        
 	        Settings set = SettingsManager.getInstance(this.getBaseContext()).getSettingsInstance();
 	        //Read Credentials if existing, if not --> Open Credentials Dialog to create settings
 	        if(set == null) {
-	        		startCredDialog();
-		   } else {
+	        	CredDialog.showChangelog = true;
+	        	startCredDialog();
+		    } else {
 		        	//Check if Calendar already downloaded... 
 		        	//Downloaded is true per default
 		        	if(DOWNLOADED) {
@@ -212,11 +215,16 @@ public class LV_PlanActivity extends FragmentActivity {
 		        	} else {
 		        		DownloadFromUrl();
 		        	}
+			    //Verify if newer version installed
+		        if(Changelog.verifyVersionChanged(this)){
+		        	Changelog.viewChangelog(this);
 		        }
-
+		    }
+	        	        
 	        //Init List
 	        mAdapter = new MyExpandableListAdapter(this, groups, children);
 	        epView.setAdapter(mAdapter);
+	        	        
     	} catch(Exception ex) {
     		Log.d("OnCreate", "Exception: ", ex);
     	}
@@ -334,7 +342,7 @@ public class LV_PlanActivity extends FragmentActivity {
 	    		DownloadFromUrl();
 	    		return true;
 	    	case R.id.properties:
-	    		//Settings �ffnen
+	    		//open Settings 
 	    		Intent intent = new Intent(LV_PlanActivity.this, CredDialog.class);
 	            startActivity(intent);
 	    		finish();
@@ -349,7 +357,7 @@ public class LV_PlanActivity extends FragmentActivity {
 	    		}
 	    		return true;
 	    	case R.id.delgooglecal:
-	    		calendarWriter = new ExportCalendarManager(this.getBaseContext(), handler);
+	    		calendarWriter = new ExportCalendarManager(this.getBaseContext(), handler, this.getSupportFragmentManager());
 	    		if(calendarWriter.deleteCalEntries()) {
 		    		Toast.makeText(getBaseContext(), 
 							"Calendar Entries deleted", 
@@ -395,7 +403,7 @@ public class LV_PlanActivity extends FragmentActivity {
 			//}
 			readLvPlanEntries = lvPlan.size();
 			//Sync to Google Calendar
-			calendarWriter = new ExportCalendarManager(this.getBaseContext(), handler);
+			calendarWriter = new ExportCalendarManager(this.getBaseContext(), handler, this.getSupportFragmentManager());
 			calendarWriter.setLvPlanEntries(lvPlan);
 			calendarWriter.start();
 		}
@@ -428,8 +436,17 @@ public class LV_PlanActivity extends FragmentActivity {
      * created Progress Dialog....
      */
     void showProgressDialog(final int id){
-    	DialogFragment newDF = MyProgressDialog.newInstance(id);
+    	newDF = MyProgressDialog.newInstance(id);
     	newDF.show(getSupportFragmentManager(), "dialog");
+    }
+    
+    /**
+     * Updates progress of google sync
+     */
+    public void updateProgress(){
+    	if(newDF != null &&  newDF instanceof MyProgressDialog){
+    		((MyProgressDialog)newDF).updateProgress(CalendarExporter.COUNT, readLvPlanEntries);
+    	}
     }
     
     /*

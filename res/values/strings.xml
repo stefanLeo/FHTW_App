@@ -18,5 +18,12 @@
         <item>Monthly</item>
         <item>Manual</item>
     </string-array>
+    <string name="CalendarChooser">Choose Calendar</string>
     <string name="DeleteGoogleCal">Delete FHTW Calendar Entries</string>
+    <string name="Changes">Changes: </string>
+    <string name="ChangeHeader">Thanks for installing LV-Plan FHTW</string>
+    <string name="ChangelogLink">https://technikum-wien.atlassian.net</string>
+    <string name="WebSites">Project Info Links:</string>
+    <string name="OSHosting"><a href="https://github.com/stefanLeo/FHTW_App">Open Source Hosting</a></string>
+    <string name="JiraLink"><a href ="https://technikum-wien.atlassian.net">Issue Tracking / Feature Requests</a></string>
 </resources>
